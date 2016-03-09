@@ -146,6 +146,7 @@ echo "  return program;" >> $SOURCE
 echo "}" >> $SOURCE
 echo "viennacl::ocl::program & submit_conv_spatial_program(" >> $SOURCE
 echo "viennacl::ocl::context *ctx, string name, string options) {" >> $SOURCE
+echo "  std::stringstream ss;" >> $SOURCE
 echo "  static const char* core_defines =" >> $SOURCE
 echo "  \"#define Dtype float\n\"" >> $SOURCE
 echo "  \"#define Dtype2 float2\n\"" >> $SOURCE
@@ -154,10 +155,16 @@ echo "  \"#define Dtype8 float8\n\"" >> $SOURCE
 echo "  \"#define Dtype16 float16\n\"" >> $SOURCE
 echo "  \"#define OCL_KERNEL_LOOP(i, n)\"" >> $SOURCE
 echo "  \" for (int i = get_global_id(0); i < (n); i += get_global_size(0))\n\";" >> $SOURCE
-echo "  string sources = core_defines;" >> $SOURCE
-echo "  sources += conv_layer_spatial_float;" >> $SOURCE
+echo "  ss << header << \"\n\n\";" >> $SOURCE
+echo "#ifdef USE_INDEX_64" >> $SOURCE
+echo "  ss << definitions_64 << \"\n\n\";" >> $SOURCE
+echo "#else" >> $SOURCE
+echo "  ss << definitions_32 << \"\n\n\";" >> $SOURCE
+echo "#endif" >> $SOURCE
+echo "  ss << string(core_defines) << \"\n\n\";" >> $SOURCE
+echo "  ss << conv_layer_spatial_float << \"\n\n\";" >> $SOURCE
 echo "  ctx->build_options(options);" >> $SOURCE
-echo "  viennacl::ocl::program &program = ctx->add_program(sources, name);" >> $SOURCE
+echo "  viennacl::ocl::program &program = ctx->add_program(ss.str(), name);" >> $SOURCE
 echo "  return program;" >> $SOURCE
 echo "}" >> $SOURCE
 echo "}  // namespace caffe" >> $SOURCE
