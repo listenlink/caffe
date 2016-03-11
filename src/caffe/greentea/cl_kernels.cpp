@@ -146,6 +146,7 @@ viennacl::ocl::program & RegisterKernels(viennacl::ocl::context *ctx) {
 }
 viennacl::ocl::program & submit_conv_spatial_program(
 viennacl::ocl::context *ctx, string name, string options) {
+  std::stringstream ss;
   static const char* core_defines =
   "#define Dtype float\n"
   "#define Dtype2 float2\n"
@@ -154,10 +155,16 @@ viennacl::ocl::context *ctx, string name, string options) {
   "#define Dtype16 float16\n"
   "#define OCL_KERNEL_LOOP(i, n)"
   " for (int i = get_global_id(0); i < (n); i += get_global_size(0))\n";
-  string sources = core_defines;
-  sources += conv_layer_spatial_float;
+  ss << header << "\n\n";
+#ifdef USE_INDEX_64
+  ss << definitions_64 << "\n\n";
+#else
+  ss << definitions_32 << "\n\n";
+#endif
+  ss << string(core_defines) << "\n\n";
+  ss << conv_layer_spatial_float << "\n\n";
   ctx->build_options(options);
-  viennacl::ocl::program &program = ctx->add_program(sources, name);
+  viennacl::ocl::program &program = ctx->add_program(ss.str(), name);
   return program;
 }
 }  // namespace caffe
